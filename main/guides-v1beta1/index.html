@@ -13,7 +13,7 @@
     
     
       
-        <title>Metrics - External Secrets Operator</title>
+        <title>Upgrading to v1beta1 - External Secrets Operator</title>
       
     
     
@@ -68,7 +68,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#metrics" class="md-skip">
+        <a href="#upgrading-crd-versions" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Metrics
+              Upgrading to v1beta1
             
           </span>
         </div>
@@ -518,6 +518,20 @@
               
   
   
+  
+    <li class="md-nav__item">
+      <a href="../guides-metrics/" class="md-nav__link">
+        Metrics
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
     
   
   
@@ -529,24 +543,48 @@
         
       
       
-      <a href="./" class="md-nav__link md-nav__link--active">
-        Metrics
-      </a>
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Upgrading to v1beta1
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../guides-v1beta1/" class="md-nav__link">
+      <a href="./" class="md-nav__link md-nav__link--active">
         Upgrading to v1beta1
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#differences-between-versions" class="md-nav__link">
+    Differences between versions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrading" class="md-nav__link">
+    Upgrading
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1344,6 +1382,28 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#differences-between-versions" class="md-nav__link">
+    Differences between versions
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#upgrading" class="md-nav__link">
+    Upgrading
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -1354,14 +1414,36 @@
             <article class="md-content__inner md-typeset">
               
                 
-<a href="https://github.com/external-secrets/external-secrets/edit/master/docs/guides-metrics.md" title="Edit this page" class="md-content__button md-icon">
+<a href="https://github.com/external-secrets/external-secrets/edit/master/docs/guides-v1beta1.md" title="Edit this page" class="md-content__button md-icon">
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
 </a>
 
 
-<h1 id="metrics">Metrics</h1>
-<p>The External Secrets Operator exposes its Prometheus metrics in the <code>/metrics</code> path. To enable it, set the <code>prometheus.enabled</code> Helm flag to <code>true</code>.</p>
-<p>The Operator has the metrics inherited from Kubebuilder plus some custom metrics with the <code>external_secret</code> prefix.</p>
+<h1 id="upgrading-crd-versions">Upgrading CRD versions</h1>
+<p>From version v0.5.0, <code>v1alpha1</code> version is deprecated, and <code>v1beta1</code> is in place. This guide will cover the main differences between the two versions, and a procedure on how to safely upgrade it.</p>
+<h2 id="differences-between-versions">Differences between versions</h2>
+<p>Versions v1alpha1 and v1beta1 are fully-compatible for SecretStores and ClusterSecretStores. For ExternalSecrets, there is a difference on the <code>dataFrom</code> method.</p>
+<p>While in v1alpha1, we could define a <code>dataFrom</code> with the following format:</p>
+<div class="highlight"><pre><span></span><code>spec:
+  dataFrom:
+    - key: my-key
+    - key: my-other-key
+</code></pre></div>
+<p>In v1beta1 is possible to use two methods. One of them is <code>Extract</code> and has the exact same behavior as <code>dataFrom</code> in v1alpha1. The other is <code>Find</code>, which allows finding multiple external secrets and map them into a single Kubernetes secret. Here is an example of <code>Find</code>:</p>
+<div class="highlight"><pre><span></span><code>spec:
+  dataFrom:
+    - find:
+        name:  #matches any secret name ending in foo-bar
+          regexp: .*foo-bar$
+    - find:
+        tags: #matches any secrets with the following metadata.
+            env: dev  
+            app: web
+</code></pre></div>
+<h2 id="upgrading">Upgrading</h2>
+<p>If you already have an installation of ESO using <code>v1alpha1</code>, we recommend you to upgrade to <code>v1beta1</code>. If you do not use <code>dataFrom</code> in your ExternalSecrets, or if you deploy the CRDs using the official Helm charts, the upgrade can be done with no risk of losing data. </p>
+<p>If you are installing CRDs manually, you will need to deploy the bundle CRD file available at <code>deploys/crds/bundle.yaml</code>. This bundle file contains <code>v1beta1</code> definition and a conversion webhook configuration. This configuration will ensure that new requests to handle any CRD object will only be valid after the upgrade is successfully complete - so there are no risks of losing data due to an incomplete upgrade. Once the new CRDs are applied, you can proceed to upgrade the controller version.</p>
+<p>Once the upgrade is finished, at each reconcile, any <code>ExternalSecret</code>, <code>SecretStore</code>,  and <code>ClusterSecretStore</code> stored in <code>v1alpha1</code> will be automatically converted to <code>v1beta1</code>. </p>
 
               
             </article>
@@ -1375,7 +1457,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
         
-        <a href="../guides-multi-tenancy/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Multi Tenancy" rel="prev">
+        <a href="../guides-metrics/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Metrics" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
           </div>
@@ -1384,20 +1466,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Multi Tenancy
+              Metrics
             </div>
           </div>
         </a>
       
       
         
-        <a href="../guides-v1beta1/" class="md-footer__link md-footer__link--next" aria-label="Next: Upgrading to v1beta1" rel="next">
+        <a href="../guides-using-latest-image/" class="md-footer__link md-footer__link--next" aria-label="Next: Using Latest Image" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Upgrading to v1beta1
+              Using Latest Image
             </div>
           </div>
           <div class="md-footer__button md-icon">
